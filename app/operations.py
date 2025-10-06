@@ -1,53 +1,30 @@
-from __future__ import annotations
-from dataclasses import dataclass
-from typing import Protocol, Dict, Callable
+from typing import Callable, Dict
 from .exceptions import InvalidOperationError, DivisionByZeroError
 
-class Operation(Protocol):
-    def execute(self, a: float, b: float) -> float: ...
+def _add(a: float, b: float) -> float: return a + b
+def _sub(a: float, b: float) -> float: return a - b
+def _mul(a: float, b: float) -> float: return a * b
+def _div(a: float, b: float) -> float:
+    if b == 0:
+        raise DivisionByZeroError("division by zero")
+    return a / b
+def _pow(a: float, b: float) -> float: return a ** b
+def _root(a: float, b: float) -> float:
+    if b == 0:
+        raise DivisionByZeroError("root with zero exponent")
+    return a ** (1.0 / b)
 
-@dataclass(frozen=True)
-class Add:
-    def execute(self, a: float, b: float) -> float: return a + b
-
-@dataclass(frozen=True)
-class Sub:
-    def execute(self, a: float, b: float) -> float: return a - b
-
-@dataclass(frozen=True)
-class Mul:
-    def execute(self, a: float, b: float) -> float: return a * b
-
-@dataclass(frozen=True)
-class Div:
-    def execute(self, a: float, b: float) -> float:
-        if b == 0:
-            raise DivisionByZeroError("Division by zero")
-        return a / b
-
-@dataclass(frozen=True)
-class Pow:
-    def execute(self, a: float, b: float) -> float: return a ** b
-
-@dataclass(frozen=True)
-class Root:
-    def execute(self, a: float, b: float) -> float:
-        if b == 0:
-            raise InvalidOperationError("Zero root not defined")
-        return a ** (1.0 / b)
-
-_FACTORY: Dict[str, Callable[[], Operation]] = {
-    "add": Add,
-    "sub": Sub,
-    "mul": Mul,
-    "div": Div,
-    "pow": Pow,
-    "root": Root,
+_OPS: Dict[str, Callable[[float, float], float]] = {
+    "add": _add, "sub": _sub, "mul": _mul, "div": _div, "pow": _pow, "root": _root,
 }
 
-def get_operation(name: str) -> Operation:
-    key = name.lower()
-    try:
-        return _FACTORY[key]()
-    except KeyError as e:
-        raise InvalidOperationError(f"Unknown operation: {name}") from e
+def get_operation(name: str) -> Callable[[float, float], float]:
+    func = _OPS.get(name.lower())
+    if func is None:
+        raise InvalidOperationError(f"unknown operation: {name}")
+    return func
+
+def execute(name: str, a: float, b: float) -> float:
+    return get_operation(name)(a, b)
+
+__all__ = ["get_operation", "execute"]

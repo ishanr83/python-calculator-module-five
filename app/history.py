@@ -1,39 +1,53 @@
 from __future__ import annotations
+import os
 import pandas as pd
-from datetime import datetime
-from typing import List, Dict
+from dataclasses import dataclass
+from typing import Optional
+from .exceptions import HistoryError
 
+COLUMNS = ["op", "a", "b", "result", "ts"]
+
+@dataclass
 class History:
-    COLUMNS = ["op", "a", "b", "result", "ts"]
+    df: pd.DataFrame
 
-    def __init__(self) -> None:
-        self._df = pd.DataFrame(columns=self.COLUMNS)
-
-    def add(self, op: str, a: float, b: float, result: float) -> None:
-        row = {"op": op, "a": a, "b": b, "result": result, "ts": datetime.utcnow().isoformat()}
-        self._df = pd.concat([self._df, pd.DataFrame([row])], ignore_index=True)
-
-    def clear(self) -> None:
-        self._df = pd.DataFrame(columns=self.COLUMNS)
-
-    def to_df(self) -> pd.DataFrame:
-        return self._df.copy()
-
-    def __len__(self) -> int:
-        return len(self._df)
-
-    def save_csv(self, path: str) -> None:
-        self._df.to_csv(path, index=False)
+    @classmethod
+    def empty(cls) -> "History":
+        return cls(pd.DataFrame(columns=COLUMNS))
 
     @classmethod
     def load_csv(cls, path: str) -> "History":
-        h = cls()
         try:
+            if not path or not os.path.exists(path):
+                return cls.empty()
             df = pd.read_csv(path)
-            missing = [c for c in cls.COLUMNS if c not in df.columns]
+            missing = [c for c in COLUMNS if c not in df.columns]
             if missing:
-                raise ValueError(f"Bad history file, missing: {missing}")
-            h._df = df
-        except FileNotFoundError:
-            h._df = pd.DataFrame(columns=cls.COLUMNS)
-        return h
+                # normalize columns if someone edited the csv
+                for c in missing: df[c] = None
+                df = df[COLUMNS]
+            return cls(df)
+        except Exception as e:
+            raise HistoryError(f"load_csv failed: {e}") from e
+
+    def save_csv(self, path: str) -> None:
+        try:
+            self.df.to_csv(path, index=False)
+        except Exception as e:
+            raise HistoryError(f"save_csv failed: {e}") from e
+
+    def add(self, op: str, a: float, b: float, result: float, ts: Optional[str] = None) -> None:
+        row = {"op": op, "a": a, "b": b, "result": result, "ts": ts or pd.Timestamp.utcnow().isoformat()}
+        self.df.loc[len(self.df)] = row
+
+    def clear(self) -> None:
+        self.df = self.df.iloc[0:0].copy()
+
+    def snapshot(self) -> pd.DataFrame:
+        return self.df.copy(deep=True)
+
+    def restore(self, snapshot: pd.DataFrame) -> None:
+        self.df = snapshot.copy(deep=True)
+
+    def to_df(self) -> pd.DataFrame:
+        return self.df

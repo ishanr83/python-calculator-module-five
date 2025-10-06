@@ -1,36 +1,23 @@
 from __future__ import annotations
 from typing import Callable
+import os
 from .calculation import Calculator
-from .calculator_config import Config
-from .input_validators import parse_two_numbers
-from .exceptions import CalculatorError
+from .history import History
+from .exceptions import DivisionByZeroError, InvalidOperationError
 
-BANNER = "Commands: add|sub|mul|div|pow|root <a> <b> | history | help | clear | undo | redo | save | load | exit"
-
-def _print_history(calc: Calculator, out: Callable[[str], None]) -> None:
-    df = calc.history.to_df()
-    if df.empty:
-        out("No history.")
-    else:
-        for i, r in df.iterrows():
-            out(f"{i+1}. {r['op']}({r['a']}, {r['b']}) = {r['result']}")
+BANNER = "Calculator REPL. Commands: add|sub|mul|div|pow|root <a> <b> | history | help | clear | undo | redo | save | load | exit"
 
 def run_repl(
     input_fn: Callable[[str], str] = input,
-    output_fn: Callable[[str], None] = print
+    output_fn: Callable[[str], None] = print,
 ) -> None:
-    cfg = Config.load()
-    calc = Calculator()
-    if cfg.auto_load:
-        calc.load(cfg.history_path)
+    hist_path = os.getenv("HISTORY_PATH", "history.csv")
+    auto_load = os.getenv("AUTO_LOAD", "false").lower() in {"1", "true", "yes"}
+    auto_save = os.getenv("AUTO_SAVE", "false").lower() in {"1", "true", "yes"}
 
-    def logger(op: str, a: float, b: float, result: float) -> None:
-        if cfg.auto_save:
-            calc.save(cfg.history_path)
-
-    calc.subscribe(logger)
-
+    calc = Calculator(History.load_csv(hist_path) if auto_load else History.empty())
     output_fn(BANNER)
+
     while True:
         try:
             line = input_fn("> ").strip()
@@ -42,32 +29,58 @@ def run_repl(
             output_fn("Type 'help' for usage.")
             continue
 
-        cmd = line.split()[0].lower()
+        parts = line.split()
+        cmd = parts[0].lower()
 
-        if cmd in {"exit", "quit", "q"}:
+        if cmd in {"q", "quit", "exit"}:
             output_fn("Bye!")
             break
-        if cmd == "help":
-            output_fn(BANNER); continue
-        if cmd == "history":
-            _print_history(calc, output_fn); continue
-        if cmd == "clear":
-            calc.clear(); output_fn("Cleared."); continue
-        if cmd == "undo":
-            output_fn("Undone." if calc.undo() else "Nothing to undo."); continue
-        if cmd == "redo":
-            output_fn("Redone." if calc.redo() else "Nothing to redo."); continue
-        if cmd == "save":
-            calc.save(cfg.history_path); output_fn("Saved."); continue
-        if cmd == "load":
-            calc.load(cfg.history_path); output_fn("Loaded."); continue
 
-        # operations
-        try:
-            a, b = parse_two_numbers(line.split())
-            result = calc.compute(cmd, a, b)
-            output_fn(f"Result: {result}")
-        except ValueError as e:
-            output_fn(f"Error: {e}")
-        except CalculatorError as e:
-            output_fn(f"Error: {e}")
+        if cmd == "help":
+            output_fn(BANNER)
+            continue
+
+        if cmd == "history":
+            df = calc.history.to_df()
+            if df.empty:
+                output_fn("No calculations yet.")
+            else:
+                for _, r in df.iterrows():
+                    output_fn(f"{r['op']}({r['a']}, {r['b']}) = {r['result']}")
+            continue
+
+        if cmd == "clear":
+            calc.history.clear()
+            output_fn("History cleared.")
+            continue
+
+        if cmd == "undo":
+            calc.undo(); output_fn("OK"); continue
+        if cmd == "redo":
+            calc.redo(); output_fn("OK"); continue
+        if cmd == "save":
+            calc.history.save_csv(hist_path); output_fn("Saved."); continue
+        if cmd == "load":
+            calc.history = History.load_csv(hist_path); output_fn("Loaded."); continue
+
+        if cmd in {"add", "sub", "mul", "div", "pow", "root"}:
+            if len(parts) != 3:
+                output_fn("Usage: <op> <a> <b>")
+                continue
+            try:
+                a = float(parts[1]); b = float(parts[2])
+            except ValueError:
+                output_fn("Error: numbers must be numeric")
+                continue
+            try:
+                result = calc.compute(cmd, a, b)
+                output_fn(f"Result: {result}")
+                if auto_save:
+                    calc.history.save_csv(hist_path)
+            except DivisionByZeroError:
+                output_fn("Error: Division by zero")
+            except InvalidOperationError as e:
+                output_fn(f"Error: {e}")
+            continue
+
+        output_fn("Unknown command. Type 'help'.")

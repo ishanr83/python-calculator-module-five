@@ -1,30 +1,30 @@
-"""
-Exception hierarchy for the calculator.
-
-Tests import ValidationError from app.exceptions, so it must exist.
-We also provide a few specific types used across the app.
-"""
-
 class CalculatorError(Exception):
     """Base error for calculator problems."""
 
 class ValidationError(CalculatorError):
-    """Bad or malformed user input (parsing, type, range)."""
+    """Bad or malformed user input."""
 
 class ConfigError(CalculatorError):
-    """Configuration or environment related error."""
+    """Configuration/env error."""
 
 class OperationError(CalculatorError):
-    """Operation lookup or execution failure."""
+    """Base for operation issues."""
+
+class InvalidOperationError(OperationError):
+    """Unknown or unsupported operation."""
 
 class DivisionByZeroError(OperationError):
     """Division by zero attempt."""
+
+class HistoryError(CalculatorError):
+    """History storage/IO errors."""
     
-# Make star-imports and explicit imports predictable in tests
 __all__ = [
     "CalculatorError",
     "ValidationError",
     "ConfigError",
     "OperationError",
+    "InvalidOperationError",
     "DivisionByZeroError",
+    "HistoryError",
 ]
