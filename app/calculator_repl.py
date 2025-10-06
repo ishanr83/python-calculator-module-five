@@ -15,7 +15,7 @@ class AutoSaver:
 
 def run_repl(input_fn: Callable[[str], str] = input, output_fn: Callable[[str], None] = print) -> None:
     cfg = load_config()
-    calc = Calculator(History.load_csv(cfg.history_path))
+    calc = Calculator(history_mod.History.load_csv(cfg.history_path))
     if cfg.auto_save:
         class _Auto:
             def update(self, event, payload): calc.history.save_csv(cfg.history_path)
@@ -47,7 +47,7 @@ def run_repl(input_fn: Callable[[str], str] = input, output_fn: Callable[[str], 
         if cmd.lower() == "load":
             from .history import History
             calc.caretaker.push_undo(calc.snapshot())
-            calc.history = History.load_csv(cfg.history_path)
+            calc.history = history_mod.History.load_csv(cfg.history_path)
             output_fn("Loaded."); continue
 
         # Operation path (Strategy via factory)
