@@ -1,31 +1,28 @@
-from __future__ import annotations
-from dataclasses import dataclass
 import pandas as pd
-from typing import List
 
-@dataclass
-class _Memento:
-    df: pd.DataFrame
+class Memento:
+    def __init__(self, state: pd.DataFrame):
+        self.state = state
 
-class Caretaker:
-    def __init__(self) -> None:
-        self._undo: List[_Memento] = []
-        self._redo: List[_Memento] = []
+class CareTaker:
+    def __init__(self):
+        self._undos = []
+        self._redos = []
 
-    def snapshot(self, df: pd.DataFrame) -> None:
-        self._undo.append(_Memento(df.copy()))
-        self._redo.clear()
+    def save(self, memento: Memento):
+        self._undos.append(memento)
+        self._redos.clear()
 
-    def undo(self) -> pd.DataFrame | None:
-        if not self._undo:
-            return None
-        m = self._undo.pop()
-        self._redo.append(_Memento(m.df.copy()))
-        return m.df.copy()
+    def undo(self) -> Memento | None:
+        if self._undos:
+            memento = self._undos.pop()
+            self._redos.append(memento)
+            return memento
+        return None
 
-    def redo(self) -> pd.DataFrame | None:
-        if not self._redo:
-            return None
-        m = self._redo.pop()
-        self._undo.append(_Memento(m.df.copy()))
-        return m.df.copy()
+    def redo(self) -> Memento | None:
+        if self._redos:
+            memento = self._redos.pop()
+            self._undos.append(memento)
+            return memento
+        return None

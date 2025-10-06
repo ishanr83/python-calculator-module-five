@@ -28,3 +28,6 @@ __all__ = [
     "DivisionByZeroError",
     "HistoryError",
 ]
+
+class InvalidOperationError(Exception):
+    pass

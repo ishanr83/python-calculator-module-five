@@ -1,30 +1,41 @@
-from typing import Callable, Dict
-from .exceptions import InvalidOperationError, DivisionByZeroError
+from .exceptions import DivisionByZeroError, InvalidOperationError
 
-def _add(a: float, b: float) -> float: return a + b
-def _sub(a: float, b: float) -> float: return a - b
-def _mul(a: float, b: float) -> float: return a * b
-def _div(a: float, b: float) -> float:
-    if b == 0:
-        raise DivisionByZeroError("division by zero")
-    return a / b
-def _pow(a: float, b: float) -> float: return a ** b
-def _root(a: float, b: float) -> float:
-    if b == 0:
-        raise DivisionByZeroError("root with zero exponent")
-    return a ** (1.0 / b)
+class Add:
+    def execute(self, a, b): return a + b
 
-_OPS: Dict[str, Callable[[float, float], float]] = {
-    "add": _add, "sub": _sub, "mul": _mul, "div": _div, "pow": _pow, "root": _root,
+class Subtract:
+    def execute(self, a, b): return a - b
+
+class Multiply:
+    def execute(self, a, b): return a * b
+
+class Divide:
+    def execute(self, a, b):
+        if b == 0:
+            raise DivisionByZeroError("Division by zero")
+        return a / b
+
+class Power:
+    def execute(self, a, b): return a ** b
+
+class Root:
+    def execute(self, a, b):
+        if b == 0:
+            raise ValueError("Root degree cannot be zero")
+        if a < 0 and b % 2 == 0:
+            raise ValueError("Cannot compute even root of negative number")
+        return a ** (1 / b)
+
+_OPERATIONS = {
+    "add": Add(),
+    "sub": Subtract(),
+    "mul": Multiply(),
+    "div": Divide(),
+    "pow": Power(),
+    "root": Root(),
 }
 
-def get_operation(name: str) -> Callable[[float, float], float]:
-    func = _OPS.get(name.lower())
-    if func is None:
-        raise InvalidOperationError(f"unknown operation: {name}")
-    return func
-
-def execute(name: str, a: float, b: float) -> float:
-    return get_operation(name)(a, b)
-
-__all__ = ["get_operation", "execute"]
+def get_operation(name: str):
+    if name not in _OPERATIONS:
+        raise InvalidOperationError(f"Unknown operation: {name}")
+    return _OPERATIONS[name]
