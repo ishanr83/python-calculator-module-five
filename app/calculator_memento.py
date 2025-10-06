@@ -1,17 +1,31 @@
+from __future__ import annotations
 from dataclasses import dataclass
 import pandas as pd
+from typing import List
 
-@dataclass(frozen=True)
-class Memento:
+@dataclass
+class _Memento:
     df: pd.DataFrame
 
 class Caretaker:
     def __init__(self) -> None:
-        self._undo: list[Memento] = []
-        self._redo: list[Memento] = []
+        self._undo: List[_Memento] = []
+        self._redo: List[_Memento] = []
 
-    def push_undo(self, m: Memento) -> None: self._undo.append(m)
-    def pop_undo(self) -> Memento | None: return self._undo.pop() if self._undo else None
-    def push_redo(self, m: Memento) -> None: self._redo.append(m)
-    def pop_redo(self) -> Memento | None: return self._redo.pop() if self._redo else None
-    def clear_redo(self) -> None: self._redo.clear()
+    def snapshot(self, df: pd.DataFrame) -> None:
+        self._undo.append(_Memento(df.copy()))
+        self._redo.clear()
+
+    def undo(self) -> pd.DataFrame | None:
+        if not self._undo:
+            return None
+        m = self._undo.pop()
+        self._redo.append(_Memento(m.df.copy()))
+        return m.df.copy()
+
+    def redo(self) -> pd.DataFrame | None:
+        if not self._redo:
+            return None
+        m = self._redo.pop()
+        self._undo.append(_Memento(m.df.copy()))
+        return m.df.copy()

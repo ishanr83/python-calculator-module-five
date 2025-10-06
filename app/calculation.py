@@ -1,49 +1,57 @@
-from dataclasses import dataclass, field
-from typing import Protocol, Any
-from .operations import operation_factory
+from __future__ import annotations
+from typing import Callable, List
+from .operations import get_operation
 from .history import History
-from .calculator_memento import Memento, Caretaker
+from .calculator_memento import Caretaker
 
-class Observer(Protocol):
-    def update(self, event: str, payload: dict[str, Any]) -> None: ...
+Observer = Callable[[str, float, float, float], None]
 
-@dataclass
 class Calculator:
-    history: History
-    observers: list[Observer] = field(default_factory=list)
-    caretaker: Caretaker = field(default_factory=Caretaker)
+    def __init__(self, history: History | None = None) -> None:
+        self.history = History() if history is None else history
+        self._observers: List[Observer] = []
+        self._memento = Caretaker()
 
-    def notify(self, event: str, payload: dict[str, Any]) -> None:
-        for obs in self.observers: obs.update(event, payload)
+    # Observer
+    def subscribe(self, fn: Observer) -> None:
+        if fn not in self._observers:
+            self._observers.append(fn)
 
-    # Memento helpers
-    def snapshot(self) -> Memento: return Memento(self.history.to_frame())
-    def restore(self, m: Memento | None) -> None:
-        if m is None: return
-        from .history import History
-        self.history = History(m.df)
+    def _notify(self, op: str, a: float, b: float, result: float) -> None:
+        for fn in list(self._observers):
+            fn(op, a, b, result)
 
-    def calculate(self, op: str, a: float, b: float) -> float:
-        # Save state for undo, clear redo stack
-        self.caretaker.push_undo(self.snapshot()); self.caretaker.clear_redo()
-        func = operation_factory(op)
-        result = func(a, b)
+    # Facade operation
+    def compute(self, op: str, a: float, b: float) -> float:
+        self._memento.snapshot(self.history.to_df())
+        strategy = get_operation(op)
+        result = strategy.execute(a, b)
         self.history.add(op, a, b, result)
-        self.notify("calculation", {"op":op,"a":a,"b":b,"result":result})
+        self._notify(op, a, b, result)
         return result
 
+    # Persistence
+    def save(self, path: str) -> None:
+        self.history.save_csv(path)
+
+    def load(self, path: str) -> None:
+        self.history = History.load_csv(path)
+
+    # Undo/Redo
     def undo(self) -> bool:
-        m = self.caretaker.pop_undo()
-        if not m: return False
-        self.caretaker.push_redo(self.snapshot())
-        self.restore(m)
-        self.notify("undo", {})
+        df = self._memento.undo()
+        if df is None:
+            return False
+        self.history._df = df
         return True
 
     def redo(self) -> bool:
-        m = self.caretaker.pop_redo()
-        if not m: return False
-        self.caretaker.push_undo(self.snapshot())
-        self.restore(m)
-        self.notify("redo", {})
+        df = self._memento.redo()
+        if df is None:
+            return False
+        self.history._df = df
         return True
+
+    def clear(self) -> None:
+        self._memento.snapshot(self.history.to_df())
+        self.history.clear()

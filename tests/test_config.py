@@ -1,14 +1,18 @@
-import os, pytest
-from app.calculator_config import load_config
-from app.exceptions import ConfigError
+import os
+from app.calculator_config import Config
 
-def test_defaults(tmp_path, monkeypatch):
-    monkeypatch.delenv("HISTORY_PATH", raising=False)
-    monkeypatch.delenv("AUTO_SAVE", raising=False)
-    cfg = load_config()
-    assert cfg.history_path.endswith(".csv") and cfg.auto_save is True
+def test_config_defaults(monkeypatch):
+    for k in ("HISTORY_PATH","AUTO_SAVE","AUTO_LOAD"):
+        monkeypatch.delenv(k, raising=False)
+    c = Config.load()
+    assert c.history_path == "history.csv"
+    assert c.auto_save is False
+    assert c.auto_load is True
 
-def test_invalid_path(monkeypatch):
-    monkeypatch.setenv("HISTORY_PATH", "bad.txt")
-    with pytest.raises(ConfigError):
-        load_config()
+def test_config_env(monkeypatch, tmp_path):
+    monkeypatch.setenv("HISTORY_PATH", (tmp_path/"x.csv").as_posix())
+    monkeypatch.setenv("AUTO_SAVE", "true")
+    monkeypatch.setenv("AUTO_LOAD", "0")
+    c = Config.load()
+    assert c.auto_save is True
+    assert c.auto_load is False

@@ -1,29 +1,53 @@
+from __future__ import annotations
+from dataclasses import dataclass
 from typing import Protocol, Dict, Callable
-from math import sqrt
-from .exceptions import DivisionByZeroError, ValidationError
+from .exceptions import InvalidOperationError, DivisionByZeroError
 
-class OperationStrategy(Protocol):
-    def __call__(self, a: float, b: float) -> float: ...
+class Operation(Protocol):
+    def execute(self, a: float, b: float) -> float: ...
 
-def _add(a: float, b: float) -> float: return a + b
-def _sub(a: float, b: float) -> float: return a - b
-def _mul(a: float, b: float) -> float: return a * b
-def _div(a: float, b: float) -> float:
-    if b == 0: raise DivisionByZeroError("Division by zero")
-    return a / b
-def _pow(a: float, b: float) -> float: return a ** b
-def _root(a: float, b: float) -> float:
-    if b == 0: raise ValidationError("Root power cannot be zero")
-    return a ** (1.0 / b)
+@dataclass(frozen=True)
+class Add:
+    def execute(self, a: float, b: float) -> float: return a + b
 
-_OPS: Dict[str, OperationStrategy] = {
-    "add": _add, "sub": _sub, "mul": _mul, "div": _div, "pow": _pow, "root": _root,
+@dataclass(frozen=True)
+class Sub:
+    def execute(self, a: float, b: float) -> float: return a - b
+
+@dataclass(frozen=True)
+class Mul:
+    def execute(self, a: float, b: float) -> float: return a * b
+
+@dataclass(frozen=True)
+class Div:
+    def execute(self, a: float, b: float) -> float:
+        if b == 0:
+            raise DivisionByZeroError("Division by zero")
+        return a / b
+
+@dataclass(frozen=True)
+class Pow:
+    def execute(self, a: float, b: float) -> float: return a ** b
+
+@dataclass(frozen=True)
+class Root:
+    def execute(self, a: float, b: float) -> float:
+        if b == 0:
+            raise InvalidOperationError("Zero root not defined")
+        return a ** (1.0 / b)
+
+_FACTORY: Dict[str, Callable[[], Operation]] = {
+    "add": Add,
+    "sub": Sub,
+    "mul": Mul,
+    "div": Div,
+    "pow": Pow,
+    "root": Root,
 }
 
-def operation_factory(name: str) -> OperationStrategy:
+def get_operation(name: str) -> Operation:
     key = name.lower()
-    if key not in _OPS: raise ValidationError(f"Unknown operation: {name}")
-    return _OPS[key]
-
-def operations_map() -> Dict[str, Callable[[float, float], float]]:
-    return dict(_OPS)
+    try:
+        return _FACTORY[key]()
+    except KeyError as e:
+        raise InvalidOperationError(f"Unknown operation: {name}") from e

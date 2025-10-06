@@ -1,16 +1,17 @@
 # Enhanced Python Calculator (Module 5)
 
 **Author:** Ishan Rehan  
-**Date:** 2025-10-xx
+**Date:** 2025-09-29
 
-A modular command-line calculator using Strategy, Factory, Memento, Observer, and a Facade-style Calculator API. History is stored in a pandas DataFrame and auto-saved to CSV. Tests run locally and in GitHub Actions with a 100% coverage gate.
+- REPL: `add|sub|mul|div|pow|root <a> <b>`; `history`, `help`, `clear`, `undo`, `redo`, `save`, `load`, `exit`
+- Patterns: Strategy + Factory (operations), Facade (Calculator), Observer (auto-save), Memento (undo/redo)
+- pandas history saved/loaded from CSV
+- Config via `.env` or environment (`HISTORY_PATH`, `AUTO_SAVE`, `AUTO_LOAD`)
+- CI: GitHub Actions fails if coverage < 100%
 
 ## Run
 ```bash
-python -m venv .venv
-# Windows Git Bash
-source .venv/Scripts/activate
-pip install -r requirements.txt
-export PYTHONPATH=.
-python -c "from app.calculator_repl import run_repl; run_repl()"
-
+python - <<'PY'
+from app.calculator_repl import run_repl
+run_repl()
+PY
