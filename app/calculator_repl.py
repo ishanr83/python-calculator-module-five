@@ -6,9 +6,6 @@ from .exceptions import DivisionByZeroError, InvalidOperationError
 BANNER = "Simple Calculator REPL"
 
 def run_repl(_in=None, _out=None):
-    if _in is None:
-        import sys
-        _in = sys.stdin
     if _out is None:
         import sys
         _out = sys.stdout.write
@@ -25,8 +22,15 @@ def run_repl(_in=None, _out=None):
         except Exception:
             pass
 
+    # Handle _in: if callable, call it to get iterable
+    if _in is None:
+        import sys
+        input_iter = sys.stdin
+    else:
+        input_iter = _in() if callable(_in) else _in
+
     try:
-        for line in _in:
+        for line in input_iter:
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
@@ -70,7 +74,7 @@ def run_repl(_in=None, _out=None):
                     _out(f"Result: {result}\n")
                     if auto_save:
                         calc.save(history_path)
-                except ValidationError as e:
+                except ValueError as e:
                     _out(f"Input Error: {e}\n")
                 except DivisionByZeroError:
                     _out("Error: Division by zero\n")
