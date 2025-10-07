@@ -11,18 +11,22 @@ def test_undo_redo():
     calc.compute("add", 2, 3)  # history: [add]
     assert len(calc.history) == 1
 
-    # Undo
+    # Undo - restores to empty state before first compute
     assert calc.undo() is True
     assert len(calc.history) == 0
 
-    # Redo
+    # Redo - restores the state with 1 entry
     assert calc.redo() is True
     assert len(calc.history) == 1
-
-    # Undo again, then compute new → redo should be cleared
+    
+    # Undo again
     calc.undo()
+    assert len(calc.history) == 0
+    
+    # New compute clears redo stack
     calc.compute("mul", 2, 4)
-    assert calc.redo() is False  # redo stack cleared after new compute
+    assert len(calc.history) == 1
+    assert calc.redo() is False  # redo stack cleared
 
 def test_calc_save_load(tmp_path):
     calc = Calculator()
