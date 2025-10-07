@@ -4,7 +4,7 @@ class History:
     def __init__(self, df=None):
         if df is None:
             df = pd.DataFrame(columns=["operation", "operand1", "operand2", "result"])
-        self.df = df
+        self.df = df.copy()
 
     def __len__(self):
         return len(self.df)
@@ -12,17 +12,17 @@ class History:
     def add(self, op, a, b, result):
         new_row = pd.DataFrame([{
             "operation": op,
-            "operand1": a,
-            "operand2": b,
-            "result": result
-        }])
+            "operand1": float(a),
+            "operand2": float(b),
+            "result": float(result)
+        }], columns=["operation", "operand1", "operand2", "result"])
         self.df = pd.concat([self.df, new_row], ignore_index=True)
 
     def clear(self):
         self.df = pd.DataFrame(columns=self.df.columns)
 
     def to_df(self):
-        return self.df
+        return self.df.copy()
 
     def save_csv(self, path):
         self.df.to_csv(path, index=False)
