@@ -34,3 +34,10 @@ def test_history_load_missing_file(tmp_path):
     path = tmp_path / "missing.csv"
     h = History.load_csv(path)
     assert len(h) == 0
+
+def test_history_load_corrupted_csv(tmp_path):
+    path = tmp_path / "bad.csv"
+    with open(path, 'w') as f:
+        f.write("bad,columns\n1,2\n")
+    h = History.load_csv(path)
+    assert len(h) == 0  # Should handle gracefully

@@ -21,3 +21,7 @@ def test_div_zero():
 def test_invalid_operation():
     with pytest.raises(InvalidOperationError, match="Unknown operation"):
         get_operation("mod")
+
+def test_root_zero():
+    with pytest.raises(ValueError, match="Root degree cannot be zero"):
+        get_operation("root").execute(4, 0)

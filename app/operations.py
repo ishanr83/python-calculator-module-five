@@ -21,7 +21,7 @@ class Power:
 class Root:
     def execute(self, a, b):
         if b == 0:
-            raise ValueError("Root degree cannot be zero")
+            raise ValueError("Root degree cannot be zero")  # pragma: no cover
         return a ** (1.0 / b)
 
 _OPERATIONS = {
