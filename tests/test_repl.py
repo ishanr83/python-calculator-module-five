@@ -1,3 +1,6 @@
+# Author: Ishan Rehan
+# Date: 10/6/2025
+
 from io import StringIO
 from app.calculator_repl import run_repl
 import os

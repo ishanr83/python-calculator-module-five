@@ -1,3 +1,6 @@
+# Author: Ishan Rehan
+# Date: 10/6/2025
+
 import os
 from .calculation import Calculator
 from .input_validators import parse_two_numbers

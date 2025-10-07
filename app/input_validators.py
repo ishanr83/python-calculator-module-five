@@ -1,3 +1,6 @@
+# Author: Ishan Rehan
+# Date: 10/6/2025
+
 def parse_two_numbers(parts):
     if len(parts) != 3:
         raise ValueError("Usage: <op> <num1> <num2>")

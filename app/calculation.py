@@ -1,3 +1,6 @@
+# Author: Ishan Rehan
+# Date: 10/6/2025
+
 from .history import History
 from .operations import get_operation
 from .calculator_memento import CalculatorCareTaker

@@ -1,3 +1,6 @@
+# Author: Ishan Rehan
+# Date: 10/6/2025
+
 from app.calculation import Calculator
 from app.calculator_memento import CalculatorCareTaker, CalculatorMemento
 import pandas as pd

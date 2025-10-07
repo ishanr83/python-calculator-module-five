@@ -1,3 +1,6 @@
+# Author: Ishan Rehan
+# Date: 10/6/2025
+
 import pytest
 from app.operations import get_operation, Add, Subtract, Multiply, Divide, Power, Root
 from app.exceptions import DivisionByZeroError, InvalidOperationError
