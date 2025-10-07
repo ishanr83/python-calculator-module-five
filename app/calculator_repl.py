@@ -85,3 +85,6 @@ def run_repl(_in=None, _out=None):
                     _out(f"Operation Error: {e}\n")
     except KeyboardInterrupt:  # pragma: no cover
         _out("\nExiting...\n")  # pragma: no cover
+
+if __name__ == "__main__":
+    run_repl()
