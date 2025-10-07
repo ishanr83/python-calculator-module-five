@@ -1,8 +1,5 @@
-< Author: Ishan Rehan -->
-< Date: 10/6/2025 -->
-
 ```markdown
-# Enhanced Python Calculator (Module 5)
+## Enhanced Python Calculator (Module 5)
 
 Author: Ishan Rehan  
 Date: 2025-10-06  
