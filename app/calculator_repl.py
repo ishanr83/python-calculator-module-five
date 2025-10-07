@@ -86,5 +86,5 @@ def run_repl(_in=None, _out=None):
     except KeyboardInterrupt:  # pragma: no cover
         _out("\nExiting...\n")  # pragma: no cover
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     run_repl()
