@@ -70,6 +70,22 @@ def test_repl_auto_load(monkeypatch, tmp_path):
     output = "".join(out2)
     assert "add" in output.lower() or "2" in output
 
+def test_repl_auto_load_corrupted(monkeypatch, tmp_path):
+    """Test auto_load with corrupted file - triggers exception path"""
+    path = tmp_path / "corrupted.csv"
+    # Create a corrupted CSV
+    with open(path, 'w') as f:
+        f.write("garbage\ndata\n")
+    
+    monkeypatch.setenv("HISTORY_PATH", str(path))
+    monkeypatch.setenv("AUTO_LOAD", "1")
+    
+    # Should handle the exception gracefully
+    _in, _out, out = _io(["add 1 1", "q"])
+    run_repl(_in, _out)
+    output = "".join(out)
+    assert "Result: 2" in output  # Should still work
+
 def test_repl_invalid_operation():
     _in, _out, out = _io(["mod 5 2", "q"])
     run_repl(_in, _out)
@@ -105,5 +121,5 @@ def test_repl_load_fail(monkeypatch, tmp_path):
     _in, _out, out = _io(["load", "q"])
     run_repl(_in, _out)
     output = "".join(out)
-    # Should handle gracefully - either success or error message
+    # Should handle gracefully
     assert len(output) > 0
