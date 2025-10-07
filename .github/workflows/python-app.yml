@@ -21,4 +21,4 @@ jobs:
           pip install pytest pytest-cov pandas python-dotenv
       - name: Run tests with coverage
         run: |
-          python -m pytest
+          python -m pytest --cov=app --cov-fail-under=100
