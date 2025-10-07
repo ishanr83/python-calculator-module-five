@@ -1,4 +1,4 @@
-def parse_two_numbers(parts: list[str]) -> tuple[float, float]:
+def parse_two_numbers(parts):
     if len(parts) != 3:
         raise ValueError("Usage: <op> <num1> <num2>")
     try:

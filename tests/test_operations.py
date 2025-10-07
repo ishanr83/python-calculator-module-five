@@ -1,5 +1,5 @@
 import pytest
-from app.operations import get_operation
+from app.operations import get_operation, Add, Subtract, Multiply, Divide, Power, Root
 from app.exceptions import DivisionByZeroError, InvalidOperationError
 
 @pytest.mark.parametrize("op,a,b,expected", [
@@ -10,13 +10,14 @@ from app.exceptions import DivisionByZeroError, InvalidOperationError
     ("pow", 2, 3, 8),
     ("root", 9, 2, 3),
 ])
-def test_strategies(op, a, b, expected):
-    assert get_operation(op).execute(a,b) == pytest.approx(expected)
+def test_operations_execute(op, a, b, expected):
+    operation = get_operation(op)
+    assert operation.execute(a, b) == pytest.approx(expected)
 
 def test_div_zero():
     with pytest.raises(DivisionByZeroError):
-        get_operation("div").execute(1,0)
+        get_operation("div").execute(1, 0)
 
-def test_invalid_op():
-    with pytest.raises(InvalidOperationError):
-        get_operation("nope")
+def test_invalid_operation():
+    with pytest.raises(InvalidOperationError, match="Unknown operation"):
+        get_operation("mod")
