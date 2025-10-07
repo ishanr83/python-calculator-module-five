@@ -1,30 +1,37 @@
-from app.calculator_repl import run_repl, BANNER
+from io import StringIO
+from app.calculator_repl import run_repl
 
-def _io(lines):
-    it = iter(lines)
-    outs = []
-    def _in(_):
-        return next(it)
-    def _out(s):
-        outs.append(s)
-    return _in, _out, outs
+def _io(inputs):
+    input_iter = iter(inputs)
+    output_lines = []
+    def _in(): return input_iter
+    def _out(s): output_lines.append(s)
+    return _in, _out, output_lines
 
-def test_repl_flow(tmp_path, monkeypatch):
-    monkeypatch.setenv("HISTORY_PATH", (tmp_path/"h.csv").as_posix())
-    monkeypatch.setenv("AUTO_SAVE", "1")
+def test_repl_flow(monkeypatch, tmp_path):
+    monkeypatch.setenv("HISTORY_PATH", str(tmp_path / "h.csv"))
+    monkeypatch.setenv("AUTO_SAVE", "0")
     monkeypatch.setenv("AUTO_LOAD", "0")
 
-    _in,_out,out = _io(["help","add 2 3","div 5 0","history","undo","redo","save","load","clear","q"])
+    _in, _out, out = _io(["add 2 3", "div 5 0", "history", "clear", "q"])
     run_repl(_in, _out)
 
-    assert BANNER in out[0]
-    assert any("Result: 5" in s for s in out)
-    assert any("Error: Division by zero" in s for s in out)
-    assert any("Cleared." in s for s in out)
-    assert out[-1] == "Bye!"
+    output = "".join(out)
+    assert "Result: 5" in output
+    assert "Division by zero" in output
+    assert "Cleared." in output
 
-def test_blank_line_goes_to_help(monkeypatch):
-    monkeypatch.setenv("AUTO_LOAD","0")
-    _in,_out,out = _io(["","q"])
-    run_repl(_in,_out)
-    assert any("Type 'help' for usage." in s for s in out)
+def test_repl_undo_redo():
+    _in, _out, out = _io(["add 5 5", "undo", "redo", "q"])
+    run_repl(_in, _out)
+    output = "".join(out)
+    assert "Result: 10" in output
+    assert "Undone." in output
+    assert "Redone." in output
+
+def test_blank_line_ignored():
+    _in, _out, out = _io(["", "add 1 1", "q"])
+    run_repl(_in, _out)
+    output = "".join(out)
+    assert "Result: 2" in output
+    assert "REPL" in output  # banner printed

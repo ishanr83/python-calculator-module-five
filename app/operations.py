@@ -12,7 +12,7 @@ class Multiply:
 class Divide:
     def execute(self, a, b):
         if b == 0:
-            raise DivisionByZeroError("Division by zero")
+            raise DivisionByZeroError()
         return a / b
 
 class Power:
@@ -22,9 +22,7 @@ class Root:
     def execute(self, a, b):
         if b == 0:
             raise ValueError("Root degree cannot be zero")
-        if a < 0 and b % 2 == 0:
-            raise ValueError("Cannot compute even root of negative number")
-        return a ** (1 / b)
+        return a ** (1.0 / b)
 
 _OPERATIONS = {
     "add": Add(),
@@ -35,7 +33,7 @@ _OPERATIONS = {
     "root": Root(),
 }
 
-def get_operation(name: str):
+def get_operation(name):
     if name not in _OPERATIONS:
         raise InvalidOperationError(f"Unknown operation: {name}")
     return _OPERATIONS[name]
