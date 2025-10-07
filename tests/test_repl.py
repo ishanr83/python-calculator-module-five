@@ -123,3 +123,11 @@ def test_repl_load_fail(monkeypatch, tmp_path):
     output = "".join(out)
     # Should handle gracefully
     assert len(output) > 0
+
+def test_repl_value_error():
+    """Test ValueError is caught and displayed as Input Error"""
+    # This should trigger ValueError -> Input Error path
+    _in, _out, out = _io(["add nan 5", "q"])
+    run_repl(_in, _out)
+    output = "".join(out)
+    assert "Input Error" in output
