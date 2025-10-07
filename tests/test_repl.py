@@ -43,11 +43,9 @@ def test_repl_load(monkeypatch, tmp_path):
     monkeypatch.setenv("AUTO_SAVE", "0")
     monkeypatch.setenv("AUTO_LOAD", "0")
     
-    # Create and save history
     _in, _out, out = _io(["add 1 1", "save", "q"])
     run_repl(_in, _out)
     
-    # Load it
     _in2, _out2, out2 = _io(["load", "history", "q"])
     run_repl(_in2, _out2)
     output = "".join(out2)
@@ -59,11 +57,9 @@ def test_repl_auto_load(monkeypatch, tmp_path):
     monkeypatch.setenv("AUTO_SAVE", "1")
     monkeypatch.setenv("AUTO_LOAD", "0")
     
-    # Create history
     _in, _out, out = _io(["add 2 2", "q"])
     run_repl(_in, _out)
     
-    # Auto-load
     monkeypatch.setenv("AUTO_LOAD", "1")
     _in2, _out2, out2 = _io(["history", "q"])
     run_repl(_in2, _out2)
@@ -71,20 +67,17 @@ def test_repl_auto_load(monkeypatch, tmp_path):
     assert "add" in output.lower() or "2" in output
 
 def test_repl_auto_load_corrupted(monkeypatch, tmp_path):
-    """Test auto_load with corrupted file - triggers exception path"""
     path = tmp_path / "corrupted.csv"
-    # Create a corrupted CSV
     with open(path, 'w') as f:
         f.write("garbage\ndata\n")
     
     monkeypatch.setenv("HISTORY_PATH", str(path))
     monkeypatch.setenv("AUTO_LOAD", "1")
     
-    # Should handle the exception gracefully
     _in, _out, out = _io(["add 1 1", "q"])
     run_repl(_in, _out)
     output = "".join(out)
-    assert "Result: 2" in output  # Should still work
+    assert "Result: 2" in output
 
 def test_repl_invalid_operation():
     _in, _out, out = _io(["mod 5 2", "q"])
@@ -121,13 +114,18 @@ def test_repl_load_fail(monkeypatch, tmp_path):
     _in, _out, out = _io(["load", "q"])
     run_repl(_in, _out)
     output = "".join(out)
-    # Should handle gracefully
     assert len(output) > 0
 
-def test_repl_value_error():
-    """Test ValueError is caught and displayed as Input Error"""
-    # This should trigger ValueError -> Input Error path
-    _in, _out, out = _io(["add nan 5", "q"])
+def test_repl_input_error_not_enough_args():
+    """Test ValueError from parse_two_numbers - not enough arguments"""
+    _in, _out, out = _io(["add 5", "q"])
+    run_repl(_in, _out)
+    output = "".join(out)
+    assert "Input Error" in output
+
+def test_repl_input_error_non_numeric():
+    """Test ValueError from parse_two_numbers - non-numeric input"""
+    _in, _out, out = _io(["add abc def", "q"])
     run_repl(_in, _out)
     output = "".join(out)
     assert "Input Error" in output
